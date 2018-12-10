@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import csv
 
 # Read in data: DataIN
-filename = 'norm_coeffs.csv'
+filename = 'results/norm_coeffs.csv'
 FMatrix = np.genfromtxt(filename, delimiter=',')
 FMatrix = FMatrix[1:,1:]
 nF = FMatrix.shape[0]
@@ -67,8 +67,8 @@ for i in range(nF):
             text = ax.text(j, i, np.round(FMatrix[i,j],1), ha="center", va="center", color="w")
 
 ax.set_title("Feature selection for elastic net", weight='bold', size=20)
-fig.tight_layout()
-plt.show()
 plt.xlabel('Cycle number')
+fig.tight_layout()
 
-plt.savefig('enet_features.png')
+plt.savefig('./plots/enet_features.png')
+plt.savefig('./plots/enet_features.svg')
