@@ -11,12 +11,11 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import pickle
-from sklearn.ensemble import RandomForestRegressor
 
 doPlot = False
 use_all_features = False
 
-MODEL = 'AB'
+MODEL = 'RF'
 
 if MODEL == 'enet':
     full_name = 'Elastic net'
@@ -41,9 +40,9 @@ def main():
     mpe = np.zeros(N_cycles.shape)
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]
     
-    if MODEL != 'AB': # versioning issue with random forest
+    if MODEL == 'enet': # versioning issue with rf & ab
         # load all models
-        models = pickle.load(open(MODEL+"_trained_models.pkl", "rb" ))
+        models = pickle.load(open('results/'+MODEL+"_trained_models.pkl", "rb" ))
         
         # loop through enets and make predictions
         for i in np.arange(len(N_cycles)):
@@ -91,15 +90,15 @@ def main():
             print('=======================================')
             
         
-        train_mpe = pickle.load(open(MODEL+"_training_percenterror.pkl", "rb" ))
+        train_mpe = pickle.load(open('results/'+MODEL+"_training_percenterror.pkl", "rb" ))
         if MODEL != 'enet':
-            cv_mpe = pickle.load(open(MODEL+"_crossvalid_percenterror.pkl", "rb" ))
+            cv_mpe = pickle.load(open('results/'+MODEL+"_crossvalid_percenterror.pkl", "rb" ))
         else:
             cv_mpe = train_mpe # swap
             
     else:
         # random forest only
-        data = pickle.load(open(MODEL+"_data.pkl", "rb" ))
+        data = pickle.load(open('results/'+MODEL+"_data.pkl", "rb" ))
         predicted_cycle_lives = data[0]
         train_predicted_cycle_lives = data[1]
         train_mpe = data[2]
@@ -130,7 +129,8 @@ def main():
     plt.title(full_name)
     
     plt.tight_layout()
-    plt.savefig(MODEL+'_error.png',bbox_inches='tight')
+    plt.savefig('./plots/'+MODEL+'_error.png',bbox_inches='tight')
+    plt.savefig('./plots/'+MODEL+'_error.svg',bbox_inches='tight')
     
     # diagonal line plot
     plt.figure()
@@ -146,7 +146,8 @@ def main():
     plt.axis([0, 2501, 0, 2501])
     plt.legend()
     plt.tight_layout()
-    plt.savefig(MODEL+'_obs_vs_pred.png',bbox_inches='tight')
+    plt.savefig('./plots/'+MODEL+'_obs_vs_pred.png',bbox_inches='tight')
+    plt.savefig('./plots/'+MODEL+'_obs_vs_pred.svg',bbox_inches='tight')
     
     
     pickle.dump((predicted_cycle_lives,train_predicted_cycle_lives, train_mpe, cv_mpe, mpe), open('RF_data.pkl', 'wb'))  
