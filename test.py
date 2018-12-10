@@ -8,17 +8,25 @@ Created on Sun Dec  9 21:30:22 2018
 @author: peter
 """
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import pickle
+from sklearn.ensemble import RandomForestRegressor
 
-MODEL = 'enet'
+doPlot = False
+use_all_features = False
+
+MODEL = 'RF'
 
 if MODEL == 'enet':
     full_name = 'Elastic net'
-elif MODEL == 'svr':
+    use_log_cycle_life = True
+elif MODEL == 'SVR':
     full_name = 'SVR'
-elif MODEL == 'rf':
+    use_log_cycle_life = False
+elif MODEL == 'RF':
     full_name = 'Random forest'
+    use_log_cycle_life = False
 
 def main():
     # prelims
@@ -28,8 +36,6 @@ def main():
     N_cycles = np.array([20,30,40,50,60,70,80,90,100])
     rmse = np.zeros(N_cycles.shape)
     mpe = np.zeros(N_cycles.shape)
-    use_log_cycle_life = True
-    use_all_features = False
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]
     
     # load all models
@@ -42,24 +48,33 @@ def main():
         file_name = "testing/cycles_2TO" + str(int(N_cycles[i])) + "_log.csv"
         features, cycle_lives, feature_names = load_dataset(file_name, False, use_all_features, which_features)
         
-        # set enet model
+        file_name = "training/cycles_2TO" + str(int(N_cycles[i])) + "_log.csv"
+        train_features, train_cycle_lives, feature_names = load_dataset(file_name, False, use_all_features, which_features)
+        
+        
+        # set model
         m = models[i]
         
         # predictions
         if use_log_cycle_life:
             predicted_cycle_lives = 10**m.predict(features)
+            train_predicted_cycle_lives = 10**m.predict(train_features)
         else:
             predicted_cycle_lives = m.predict(features)
+            train_predicted_cycle_lives = m.predict(train_features)
         
-        plt.figure()
-        plt.plot(cycle_lives,predicted_cycle_lives,'o')
-        plt.plot([0,1400],[0,1400],'r-')
-        plt.ylabel('Predicted cycle life')
-        plt.xlabel('Observed cycle life')
-        plt.title('Cycle number '+str(N_cycles[i]))
-        #plt.axis('equal')
-        plt.axis([0, 1400, 0, 1400])
-        plt.show()
+        print(predicted_cycle_lives)
+        print(train_predicted_cycle_lives)
+        
+        if doPlot:
+            plt.figure()
+            plt.plot(cycle_lives,predicted_cycle_lives,'o')
+            plt.plot([0,1400],[0,1400],'r-')
+            plt.ylabel('Predicted cycle life')
+            plt.xlabel('Observed cycle life')
+            plt.title('Cycle number '+str(N_cycles[i]))
+            #plt.axis('equal')
+            plt.axis([0, 1400, 0, 1400])
         
         residuals = predicted_cycle_lives - cycle_lives
         rmse[i] = np.sqrt(((residuals) ** 2).mean())
@@ -72,10 +87,10 @@ def main():
         print('=======================================')
         
     
-    # plot rmse vs cycle number
+    # plot error vs cycle number
     train_mpe = pickle.load(open(MODEL+"_training_percenterror.pkl", "rb" ))
     if MODEL != 'enet':
-        cv_mpe = pickle.load(open(MODEL+"_cv_percenterror.pkl", "rb" ))
+        cv_mpe = pickle.load(open(MODEL+"_crossvalid_percenterror.pkl", "rb" ))
     
     # mse
     plt.figure()
@@ -89,7 +104,23 @@ def main():
     plt.title(full_name)
     
     plt.tight_layout()
-    plt.savefig(MODEL+'_error.png')
+    plt.savefig(MODEL+'_error.png',bbox_inches='tight')
+    
+    # diagonal line plot
+    plt.figure()
+    plt.plot(train_cycle_lives,train_predicted_cycle_lives,'rs',label='Train')
+    plt.plot(cycle_lives,predicted_cycle_lives,'bo',label='Test')
+    plt.plot([0,2400],[0,2400],'k--')
+    plt.ylabel('Predicted cycle life')
+    plt.xlabel('Observed cycle life')
+    #plt.title('Cycle '+str(N_cycles[i]))
+    plt.axes().set_aspect('equal', 'box')
+    plt.xticks(np.arange(0, 2501, step=500))
+    plt.yticks(np.arange(0, 2501, step=500))
+    plt.axis([0, 2501, 0, 2501])
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(MODEL+'_obs_vs_pred.png',bbox_inches='tight')
 
 def load_dataset(csv_path, add_intercept=True, use_all_features=True, which_features=[2]):
     """Load dataset from a CSV file.
