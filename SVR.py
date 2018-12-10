@@ -156,6 +156,14 @@ def main():
         residuals = predicted_cycle_lives - cycle_lives
         training_mpe[i] = (np.abs(residuals)/cycle_lives).mean()*100
         
+        plt.plot(cycle_lives,predicted_cycle_lives,'o')
+        plt.plot([0,2400],[0,2400],'r-')
+        plt.ylabel('Predicted cycle lives')
+        plt.xlabel('Actual cycle lives')
+        #plt.axis('equal')
+        plt.axis([0, 1400, 0, 1400])
+        plt.show()
+        
  # make nice plots
     plt.plot(N_cycles, min_rmse, '-o')
     plt.ylabel('RMSE error')
