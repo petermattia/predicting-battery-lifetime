@@ -121,6 +121,12 @@ def main():
     plt.legend()
     plt.tight_layout()
     plt.savefig(MODEL+'_obs_vs_pred.png',bbox_inches='tight')
+    
+    
+    pickle.dump((predicted_cycle_lives,train_predicted_cycle_lives, train_mpe, cv_mpe, mpe), open('RF_data.pkl', 'wb'))  
+
+    
+    
 
 def load_dataset(csv_path, add_intercept=True, use_all_features=True, which_features=[2]):
     """Load dataset from a CSV file.
