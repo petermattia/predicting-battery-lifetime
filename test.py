@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 doPlot = False
 use_all_features = False
 
-MODEL = 'RF'
+MODEL = 'AB'
 
 if MODEL == 'enet':
     full_name = 'Elastic net'
@@ -26,6 +26,9 @@ elif MODEL == 'SVR':
     use_log_cycle_life = False
 elif MODEL == 'RF':
     full_name = 'Random forest'
+    use_log_cycle_life = False
+elif MODEL == 'AB':
+    full_name = 'Adaboost'
     use_log_cycle_life = False
 
 def main():
@@ -38,7 +41,7 @@ def main():
     mpe = np.zeros(N_cycles.shape)
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]
     
-    if MODEL != 'RF': # versioning issue with random forest
+    if MODEL != 'AB': # versioning issue with random forest
         # load all models
         models = pickle.load(open(MODEL+"_trained_models.pkl", "rb" ))
         
@@ -96,7 +99,7 @@ def main():
             
     else:
         # random forest only
-        data = pickle.load(open("RF_data.pkl", "rb" ))
+        data = pickle.load(open(MODEL+"_data.pkl", "rb" ))
         predicted_cycle_lives = data[0]
         train_predicted_cycle_lives = data[1]
         train_mpe = data[2]
