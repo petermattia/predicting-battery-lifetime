@@ -19,8 +19,9 @@ def main():
 #    use_log_cycle_life = False    
     use_log_features = True
     use_all_features = False
-    which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]#list(map(int, np.linspace(2,12,11) ))
-    
+#    which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]#list(map(int, np.linspace(2,12,11) ))
+    which_features = [21,22,24,39,48,49]#list(map(int, np.linspace(2,12,11) ))
+
     best_C = np.zeros(N_cycles.shape)
     best_eps = np.zeros(N_cycles.shape)    
     trained_models = []
