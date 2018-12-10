@@ -4,6 +4,7 @@ import math
 #import sklearn as sk
 from sklearn.linear_model import ElasticNetCV
 import pandas as pd
+import pickle
 
 def main():
     N_cycles = np.array([20,30,40,50,60,70,80,90,100])
@@ -16,6 +17,8 @@ def main():
     use_log_cycle_life = True    
     use_all_features = False
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]#list(map(int, n
+    
+    trained_models = []    
     
     for i in np.arange(len(N_cycles)):
         print('Starting N_cycles = ' + str(int(N_cycles[i])))
@@ -30,7 +33,7 @@ def main():
 
     
         # Elastic Net CV
-        l1_ratio = [0, .1, .5, .7, .9, .95, .99, 1]
+        l1_ratio = [0.01, .1, .5, .7, .9, .95, .99, 1]
         enet = ElasticNetCV(l1_ratio=l1_ratio, cv=5, fit_intercept=True, normalize=True,verbose=False, max_iter=60000,random_state=0)
         # print('Elastic Net CV parameters:')    
         # print(enet.get_params())
@@ -42,6 +45,8 @@ def main():
             enet.fit(features,cycle_lives)
             predicted_cycle_lives = enet.predict(features)
 
+        trained_models.append(enet)        
+        
         plt.plot(cycle_lives,predicted_cycle_lives,'o')
         plt.plot([0,1400],[0,1400],'r-')
         plt.ylabel('Predicted cycle lives')
@@ -72,6 +77,7 @@ def main():
         print('Finished N_cycles = ' + str(int(N_cycles[i])))
         print('=======================================')
 
+
         
         
     # explainElasticNetCVResults(enet)
@@ -94,9 +100,20 @@ def main():
     plt.show()
     
     # export coeff matrix to csv
-    df = pd.DataFrame(norm_coeffs, columns=N_cycles, index=feature_names)
+    if use_all_features:
+        df = pd.DataFrame(norm_coeffs, columns=N_cycles, index=feature_names)
+    else:
+        which_features[:] = [x - 2 for x in which_features]
+        df = pd.DataFrame(norm_coeffs, columns=N_cycles, index=[feature_names[i] for i in which_features])
     df.to_csv("norm_coeffs.csv")
+    #export trained models and training error
+    pickle.dump(trained_models, open('enet_trained_models', 'wb'))
+    pickle.dump(min_rmse, open('enet_training_error', 'wb'))
 
+
+    
+    
+    
     
 def explainElasticNetCVResults(enet):
     print('Optimal alpha:')
