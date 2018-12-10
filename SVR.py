@@ -9,7 +9,7 @@ import seaborn as sns
 
 def main():
     N_cycles = np.array([20,30,40,50,60,70,80,90,100])
-#    N_cycles = np.array([ 30])
+#    N_cycles = np.array([ 40])
 
     
     min_rmse = np.zeros(N_cycles.shape)
@@ -123,7 +123,7 @@ def main():
 #        best_index = np.where(mpe==np.min(mpe))
 #        best_C[i] = C[best_index[0]]
 #        best_eps[i] = eps[best_index[1]]
-        index_best = np.argmin(mpe)
+        index_best = np.argmin(rmse)
         best_C_index = index_best // eps.shape[0]
         print('Best C index ' + str(int(best_C_index)))
         best_C[i] = C[best_C_index]
