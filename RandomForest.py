@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import math
 from sklearn.ensemble import RandomForestRegressor
 from sklearn import metrics
-from sklearn.cross_validation import cross_val_score
+from sklearn.model_selection import cross_val_score
 import pandas as pd
-import seaborn as sns
+#import seaborn as sns
 
 def main():
     N_cycles = np.array([20,30,40,50,60,70,80,90,100])
@@ -127,14 +127,14 @@ def main():
         print(best_n_trees[i])
         
         print('Training MSE:')
-        ax = sns.heatmap(train_rmse)
-        plt.show()
+        #ax = sns.heatmap(train_rmse)
+        #plt.show()
         print('Cross-validation MSE:')
-        ax = sns.heatmap(rmse)
-        plt.show()
+        #ax = sns.heatmap(rmse)
+        #plt.show()
         print('Cross-validation MPE:')
-        ax = sns.heatmap(mpe)
-        plt.show()
+        #ax = sns.heatmap(mpe)
+        #plt.show()
         
         # Train new model using best hyperparameters:
 

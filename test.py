@@ -38,69 +38,92 @@ def main():
     mpe = np.zeros(N_cycles.shape)
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]
     
-    # load all models
-    models = pickle.load(open(MODEL+"_trained_models.pkl", "rb" ))
-    
-    # loop through enets and make predictions
-    for i in np.arange(len(N_cycles)):
-        print('Starting N_cycles = ' + str(int(N_cycles[i])))
+    if MODEL != 'RF': # versioning issue with random forest
+        # load all models
+        models = pickle.load(open(MODEL+"_trained_models.pkl", "rb" ))
+        
+        # loop through enets and make predictions
+        for i in np.arange(len(N_cycles)):
+            print('Starting N_cycles = ' + str(int(N_cycles[i])))
+            
+            file_name = "testing/cycles_2TO" + str(int(N_cycles[i])) + "_log.csv"
+            features, cycle_lives, feature_names = load_dataset(file_name, False, use_all_features, which_features)
+            
+            file_name = "training/cycles_2TO" + str(int(N_cycles[i])) + "_log.csv"
+            train_features, train_cycle_lives, feature_names = load_dataset(file_name, False, use_all_features, which_features)
+            
+            
+            # set model
+            m = models[i]
+            
+            # predictions
+            if use_log_cycle_life:
+                predicted_cycle_lives = 10**m.predict(features)
+                train_predicted_cycle_lives = 10**m.predict(train_features)
+            else:
+                predicted_cycle_lives = m.predict(features)
+                train_predicted_cycle_lives = m.predict(train_features)
+            
+            print(predicted_cycle_lives)
+            print(train_predicted_cycle_lives)
+            
+            if doPlot:
+                plt.figure()
+                plt.plot(cycle_lives,predicted_cycle_lives,'o')
+                plt.plot([0,1400],[0,1400],'r-')
+                plt.ylabel('Predicted cycle life')
+                plt.xlabel('Observed cycle life')
+                plt.title('Cycle number '+str(N_cycles[i]))
+                #plt.axis('equal')
+                plt.axis([0, 1400, 0, 1400])
+            
+            residuals = predicted_cycle_lives - cycle_lives
+            rmse[i] = np.sqrt(((residuals) ** 2).mean())
+            mpe[i] = np.mean(np.abs(residuals)/cycle_lives*100)
+            
+            print('RMSE (cycles):')
+            print(rmse[i])
+            print('MPE (%):')
+            print(mpe[i])
+            print('=======================================')
+            
+        
+        train_mpe = pickle.load(open(MODEL+"_training_percenterror.pkl", "rb" ))
+        if MODEL != 'enet':
+            cv_mpe = pickle.load(open(MODEL+"_crossvalid_percenterror.pkl", "rb" ))
+        else:
+            cv_mpe = train_mpe # swap
+            
+    else:
+        # random forest only
+        data = pickle.load(open("RF_data.pkl", "rb" ))
+        predicted_cycle_lives = data[0]
+        train_predicted_cycle_lives = data[1]
+        train_mpe = data[2]
+        cv_mpe = data[3]
+        mpe = data[4]
+        
+        i=8
         
         file_name = "testing/cycles_2TO" + str(int(N_cycles[i])) + "_log.csv"
         features, cycle_lives, feature_names = load_dataset(file_name, False, use_all_features, which_features)
         
         file_name = "training/cycles_2TO" + str(int(N_cycles[i])) + "_log.csv"
         train_features, train_cycle_lives, feature_names = load_dataset(file_name, False, use_all_features, which_features)
-        
-        
-        # set model
-        m = models[i]
-        
-        # predictions
-        if use_log_cycle_life:
-            predicted_cycle_lives = 10**m.predict(features)
-            train_predicted_cycle_lives = 10**m.predict(train_features)
-        else:
-            predicted_cycle_lives = m.predict(features)
-            train_predicted_cycle_lives = m.predict(train_features)
-        
-        print(predicted_cycle_lives)
-        print(train_predicted_cycle_lives)
-        
-        if doPlot:
-            plt.figure()
-            plt.plot(cycle_lives,predicted_cycle_lives,'o')
-            plt.plot([0,1400],[0,1400],'r-')
-            plt.ylabel('Predicted cycle life')
-            plt.xlabel('Observed cycle life')
-            plt.title('Cycle number '+str(N_cycles[i]))
-            #plt.axis('equal')
-            plt.axis([0, 1400, 0, 1400])
-        
-        residuals = predicted_cycle_lives - cycle_lives
-        rmse[i] = np.sqrt(((residuals) ** 2).mean())
-        mpe[i] = np.mean(np.abs(residuals)/cycle_lives*100)
-        
-        print('RMSE (cycles):')
-        print(rmse[i])
-        print('MPE (%):')
-        print(mpe[i])
-        print('=======================================')
-        
-    
+
+
     # plot error vs cycle number
-    train_mpe = pickle.load(open(MODEL+"_training_percenterror.pkl", "rb" ))
-    if MODEL != 'enet':
-        cv_mpe = pickle.load(open(MODEL+"_crossvalid_percenterror.pkl", "rb" ))
-    
-    # mse
+    # mpe
     plt.figure()
-    plt.plot(N_cycles, train_mpe, '-o',label='Train')
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     if MODEL != 'enet':
-        plt.plot(N_cycles, cv_mpe, '-o',label='CV')
-    plt.plot(N_cycles, mpe, '-o',label='Test')
+        plt.plot(N_cycles, train_mpe, '-o',label='Train',color=colors[2])
+    plt.plot(N_cycles, cv_mpe, '-o',label='CV',color=colors[0])
+    plt.plot(N_cycles, mpe, '-o',label='Test',color=colors[1])
     plt.ylabel('Mean percent error (%)')
     plt.xlabel('Cycle number')
     plt.legend()
+    plt.ylim([0,36])
     plt.title(full_name)
     
     plt.tight_layout()
