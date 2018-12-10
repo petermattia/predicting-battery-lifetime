@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 doPlot = False
 use_all_features = False
 
-MODEL = 'RF'
+MODEL = 'AB'
 
 if MODEL == 'enet':
     full_name = 'Elastic net'
@@ -123,7 +123,7 @@ def main():
     plt.savefig(MODEL+'_obs_vs_pred.png',bbox_inches='tight')
     
     
-    pickle.dump((predicted_cycle_lives,train_predicted_cycle_lives, train_mpe, cv_mpe, mpe), open('RF_data.pkl', 'wb'))  
+    pickle.dump((predicted_cycle_lives,train_predicted_cycle_lives, train_mpe, cv_mpe, mpe), open('AB_data.pkl', 'wb'))  
 
     
     
