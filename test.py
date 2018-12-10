@@ -11,11 +11,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
+MODEL = 'enet'
+
+if MODEL == 'enet':
+    full_name = 'Elastic net'
+elif MODEL == 'svr':
+    full_name = 'SVR'
+elif MODEL == 'rf':
+    full_name = 'Random forest'
 
 def main():
     # prelims
     plt.close("all")
-    
+    matplotlib.rcParams.update({'font.size': 18})
+
     N_cycles = np.array([20,30,40,50,60,70,80,90,100])
     rmse = np.zeros(N_cycles.shape)
     mpe = np.zeros(N_cycles.shape)
@@ -24,7 +33,7 @@ def main():
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]
     
     # load all models
-    models = pickle.load(open("enet_trained_models.pkl", "rb" ))
+    models = pickle.load(open(MODEL+"_trained_models.pkl", "rb" ))
     
     # loop through enets and make predictions
     for i in np.arange(len(N_cycles)):
@@ -34,13 +43,13 @@ def main():
         features, cycle_lives, feature_names = load_dataset(file_name, False, use_all_features, which_features)
         
         # set enet model
-        enet = models[i]
+        m = models[i]
         
         # predictions
         if use_log_cycle_life:
-            predicted_cycle_lives = 10**enet.predict(features)
+            predicted_cycle_lives = 10**m.predict(features)
         else:
-            predicted_cycle_lives = enet.predict(features)
+            predicted_cycle_lives = m.predict(features)
         
         plt.figure()
         plt.plot(cycle_lives,predicted_cycle_lives,'o')
@@ -64,24 +73,23 @@ def main():
         
     
     # plot rmse vs cycle number
-    # 
-    train_rmse = pickle.load(open("enet_training_error.pkl", "rb" ))
-    
-    # rmse
-    plt.figure()
-    plt.plot(N_cycles, train_rmse, '-o',label='Train')
-    plt.plot(N_cycles, rmse, '-o',label='Test')
-    plt.ylabel('RMSE')
-    plt.xlabel('cycle number')
-    plt.legend()
+    train_mpe = pickle.load(open(MODEL+"_training_percenterror.pkl", "rb" ))
+    if MODEL != 'enet':
+        cv_mpe = pickle.load(open(MODEL+"_cv_percenterror.pkl", "rb" ))
     
     # mse
     plt.figure()
     plt.plot(N_cycles, train_mpe, '-o',label='Train')
+    if MODEL != 'enet':
+        plt.plot(N_cycles, cv_mpe, '-o',label='CV')
     plt.plot(N_cycles, mpe, '-o',label='Test')
     plt.ylabel('Mean percent error (%)')
     plt.xlabel('Cycle number')
     plt.legend()
+    plt.title(full_name)
+    
+    plt.tight_layout()
+    plt.savefig(MODEL+'_error.png')
 
 def load_dataset(csv_path, add_intercept=True, use_all_features=True, which_features=[2]):
     """Load dataset from a CSV file.

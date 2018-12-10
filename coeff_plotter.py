@@ -1,9 +1,10 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import csv
 
 # Read in data: DataIN
-filename = 'norm_coeffs_log_features_log_cycles.csv'
+filename = 'norm_coeffs.csv'
 FMatrix = np.genfromtxt(filename, delimiter=',')
 FMatrix = FMatrix[1:,1:]
 nF = FMatrix.shape[0]
@@ -41,11 +42,12 @@ for i in range(nF):
 # Plot
 fig, ax = plt.subplots(figsize=(25,20))
 im = ax.imshow(FMatrix)
+matplotlib.rcParams.update({'font.size': 18})
 
 # Create colorbar
 cbarlabel="Feature weight * 100"
 cbar = ax.figure.colorbar(im, ax=ax)
-cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", size=14)
+cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", size=18)
 
 # We want to show all ticks...
 ax.set_xticks(np.arange(len(Cycles)))
@@ -64,6 +66,9 @@ for i in range(nF):
         if FMatrix[i,j] != 0:
             text = ax.text(j, i, np.round(FMatrix[i,j],1), ha="center", va="center", color="w")
 
-ax.set_title("Feature selection for elastic net (# cycles used)", weight='bold', size=18)
+ax.set_title("Feature selection for elastic net", weight='bold', size=20)
 fig.tight_layout()
 plt.show()
+plt.xlabel('Cycle number')
+
+plt.savefig('enet_features.png')
