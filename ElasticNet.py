@@ -12,6 +12,7 @@ def main():
 
     
     min_rmse = np.zeros(N_cycles.shape)
+    min_percent_error = np.zeros(N_cycles.shape)
     optimal_l1_ratio = np.zeros(N_cycles.shape)
     optimal_alpha = np.zeros(N_cycles.shape)
     use_log_cycle_life = True    
@@ -57,6 +58,8 @@ def main():
         
         residuals = predicted_cycle_lives - cycle_lives
         min_rmse[i] = np.sqrt(((residuals) ** 2).mean())
+        min_percent_error[i] = (np.abs(residuals)/cycle_lives).mean()*100
+        
         # mean_mse = np.mean(enet.mse_path_, axis=2)
         # mean_rmse = np.sqrt(mean_mse)
         #min_rmse[i] = min(mean_rmse[~np.isnan(mean_rmse)])
@@ -88,6 +91,11 @@ def main():
     plt.xlabel('N cycles')
     plt.show()
 
+    plt.plot(N_cycles, min_percent_error, '-o')
+    plt.ylabel('Percent error')
+    plt.xlabel('N cycles')
+    plt.show()
+
     plt.subplot(2, 1, 1)
     plt.plot(N_cycles, optimal_l1_ratio, '-o')
     plt.ylabel('Optimal L1 ratio')
@@ -107,8 +115,9 @@ def main():
         df = pd.DataFrame(norm_coeffs, columns=N_cycles, index=[feature_names[i] for i in which_features])
     df.to_csv("norm_coeffs.csv")
     #export trained models and training error
-    pickle.dump(trained_models, open('enet_trained_models', 'wb'))
-    pickle.dump(min_rmse, open('enet_training_error', 'wb'))
+    pickle.dump(trained_models, open('enet_trained_models.pkl', 'wb'))
+    pickle.dump(min_rmse, open('enet_training_rmse.pkl', 'wb'))
+    pickle.dump(min_percent_error, open('enet_training_percenterror.pkl', 'wb'))
 
 
     

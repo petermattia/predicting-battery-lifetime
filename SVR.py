@@ -8,8 +8,8 @@ import pandas as pd
 import seaborn as sns
 
 def main():
-    #N_cycles = np.array([20,30,40,50,60,70,80,90,100])
-    N_cycles = np.array([30])
+#    N_cycles = np.array([20,30,40,50,60,70,80,90,100])
+    N_cycles = np.array([50 100])
 
     
     min_rmse = np.zeros(N_cycles.shape)
@@ -17,6 +17,10 @@ def main():
     use_log_features = True
     use_all_features = False
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]#list(map(int, np.linspace(2,12,11) ))
+    
+    best_C = np.zeros(N_cycles.shape)
+    best_eps = np.zeros(N_cycles.shape)    
+    
     
     for i in np.arange(len(N_cycles)):
         print('Starting N_cycles = ' + str(int(N_cycles[i])))
@@ -103,17 +107,22 @@ def main():
         print('Min RMSE with cross validation:')
         print(np.min(rmse))        
         
+        min_rmse[i] = np.min(rmse)
+        best_C[i] = 
+        
+        
         print('Training MSE:')
         ax = sns.heatmap(train_rmse)
         plt.show()
         print('Cross-validation MSE:')
         ax = sns.heatmap(rmse)
         plt.show()
-        #    # make nice plots
-#    plt.plot(N_cycles, min_rmse, '-o')
-#    plt.ylabel('RMSE error')
-#    plt.xlabel('N cycles')
-#    plt.show()
+        
+ # make nice plots
+    plt.plot(N_cycles, min_rmse, '-o')
+    plt.ylabel('RMSE error')
+    plt.xlabel('N cycles')
+    plt.show()
 
 #    plt.subplot(2, 1, 1)
 #    plt.plot(N_cycles, optimal_l1_ratio, '-o')
@@ -129,6 +138,13 @@ def main():
     # export coeff matrix to csv
 #    df = pd.DataFrame(norm_coeffs, columns=N_cycles, index=feature_names)
 #    df.to_csv("norm_coeffs.csv")
+    
+    
+    pickle.dump(trained_models, open('SVR_trained_models.pkl', 'wb'))
+    pickle.dump(min_rmse, open('SVR_training_error.pkl', 'wb'))  
+    pickle.dump(min_rmse, open('SVR_crossvalid_error.pkl', 'wb'))    
+
+    
 
     
     
