@@ -8,15 +8,13 @@ import pandas as pd
 import seaborn as sns
 
 def main():
-    N_cycles = np.array([20,30,40,50,60,70,80,90,100])
-#    N_cycles = np.array([ 30])
+#    N_cycles = np.array([20,30,40,50,60,70,80,90,100])
+    N_cycles = np.array([ 100])
 
     
     min_rmse = np.zeros(N_cycles.shape)
-    min_mpe = np.zeros(N_cycles.shape)
-    training_mpe = np.zeros(N_cycles.shape)
     min_percent_error = np.zeros(N_cycles.shape)
-#    use_log_cycle_life = False    
+    use_log_cycle_life = False    
     use_log_features = True
     use_all_features = False
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]#list(map(int, np.linspace(2,12,11) ))
@@ -49,12 +47,12 @@ def main():
 
 #        C =  np.array([1000]) #np.linspace(1,1000,50)
 #        C =  np.linspace(1,100000,50)
-        C = np.logspace(0,6,8)
-        eps = np.logspace(-2.5,-0.5,6)
+        C = np.logspace(4,6,5)
+        eps = np.logspace(-3,3,5)
 
         rmse = np.zeros([len(C),len(eps)])        
         train_rmse = np.zeros([len(C),len(eps)])
-        mpe = np.zeros([len(C),len(eps)])        
+        train_rmse = np.zeros([len(C),len(eps)])       
 
 
         
@@ -66,26 +64,24 @@ def main():
                 print('C = ' + str(C[j]))
                 print('eps = ' + str(eps[k]))
                 
-#                if use_log_cycle_life:
-#                    my_SVR.fit(features,np.log10(cycle_lives))
-#                    predicted_cycle_lives = 10**my_SVR.predict(features)
-#                    residuals = predicted_cycle_lives - cycle_lives
-#                    train_rmse[j,k] = np.sqrt(((residuals) ** 2).mean())
-##                    R_squared = my_SVR.score(features,np.log10(cycle_lives))
-#                    mse = cross_val_score(my_SVR, features, np.log10(cycle_lives), cv=5, scoring='mean_squared_error')
-#                    rmse[j,k] = np.sqrt(np.mean(mse))
-#                    next_mpe = cross_val_score(my_SVR, features, np.log10(cycle_lives), cv=5, scoring=mean_percent_error)
-#                    mpe[j,k] = np.mean(next_mpe)
-#                else:
-                my_SVR.fit(features,cycle_lives)
-                predicted_cycle_lives = my_SVR.predict(features)
-                residuals = predicted_cycle_lives - cycle_lives
-                train_rmse[j,k] = np.sqrt(((residuals) ** 2).mean())
+                if use_log_cycle_life:
+                    my_SVR.fit(features,np.log10(cycle_lives))
+                    predicted_cycle_lives = 10**my_SVR.predict(features)
+                    residuals = predicted_cycle_lives - cycle_lives
+                    train_rmse[j,k] = np.sqrt(((residuals) ** 2).mean())
+#                    R_squared = my_SVR.score(features,np.log10(cycle_lives))
+                    mse = cross_val_score(my_SVR, features, np.log10(cycle_lives), cv=5, scoring='mean_squared_error')
+                    rmse[j,k] = np.sqrt(np.mean(mse))
+                else:
+                    my_SVR.fit(features,cycle_lives)
+                    predicted_cycle_lives = my_SVR.predict(features)
+                    residuals = predicted_cycle_lives - cycle_lives
+                    train_rmse[j,k] = np.sqrt(((residuals) ** 2).mean())
+                    train_percent_error[j,k] = (np.abs(residuals)/cycle_lives).mean()*100
 #                    R_squared = my_SVR.score(features,cycle_lives)
-                mse = -cross_val_score(my_SVR, features, cycle_lives, cv=5, scoring='mean_squared_error')
-                rmse[j,k] = np.sqrt(abs(np.mean(mse)))
-                next_mpe = cross_val_score(my_SVR, features, np.log10(cycle_lives), cv=5, scoring=mean_percent_error)
-                mpe[j,k] = np.mean(next_mpe)
+                    mse = -cross_val_score(my_SVR, features, cycle_lives, cv=5, scoring='mean_squared_error')
+                    rmse[j,k] = np.sqrt(abs(np.mean(mse)))
+        
                 
                 plt.plot(cycle_lives,predicted_cycle_lives,'o')
                 plt.plot([0,2400],[0,2400],'r-')
@@ -102,9 +98,6 @@ def main():
                 print('RMSE with cross validation:')
                 print(rmse[j,k])
 
-                print('MPE with cross validation:')
-                print(mpe[j,k])
-    
                 
         #        print('N iterations to convergence: ' + str(int(enet.n_iter_)))
 #                print('R_square = ' + str(R_squared))
@@ -115,22 +108,11 @@ def main():
         print('Min RMSE with cross validation:')
         print(np.min(rmse))        
         
-        print('Min MPE with cross validation:')
-        print(np.min(mpe))          
-        
         min_rmse[i] = np.min(rmse)
-        min_mpe[i] = np.min(mpe)
-#        best_index = np.where(mpe==np.min(mpe))
-#        best_C[i] = C[best_index[0]]
-#        best_eps[i] = eps[best_index[1]]
-        index_best = np.argmin(mpe)
-        best_C_index = index_best // eps.shape[0]
-        print('Best C index ' + str(int(best_C_index)))
-        best_C[i] = C[best_C_index]
-        
-        best_eps_index = np.mod(index_best, eps.shape[0])
-        print('Best eps index ' + str(int(best_eps_index)))
-        best_eps[i] = eps[best_eps_index]
+        min_percent_error[i] = np.min()
+        index_best = np.argmin()
+        best_C[i] = index_best // eps.shape[0]
+        best_eps[i] = eps[np.mod(index_best, eps.shape[0])]
 
         print('Best eps:')
         print(best_eps[i])
@@ -143,27 +125,10 @@ def main():
         print('Cross-validation MSE:')
         ax = sns.heatmap(rmse)
         plt.show()
-        print('Cross-validation MPE:')
-        ax = sns.heatmap(mpe)
-        plt.show()
-        
-        # Train new model using best hyperparameters:
-        best_SVR = SVR(kernel='rbf',C=best_C[i], epsilon=best_eps[i])
-        best_SVR.fit(features,cycle_lives)
-        trained_models.append(best_SVR)
-        
-        predicted_cycle_lives = best_SVR.predict(features)
-        residuals = predicted_cycle_lives - cycle_lives
-        training_mpe[i] = (np.abs(residuals)/cycle_lives).mean()*100
         
  # make nice plots
     plt.plot(N_cycles, min_rmse, '-o')
     plt.ylabel('RMSE error')
-    plt.xlabel('N cycles')
-    plt.show()
-    
-    plt.plot(N_cycles, min_mpe, '-o')
-    plt.ylabel('MPE error')
     plt.xlabel('N cycles')
     plt.show()
 
@@ -184,8 +149,8 @@ def main():
     
     
     pickle.dump(trained_models, open('SVR_trained_models.pkl', 'wb'))
-    pickle.dump(min_mpe, open('SVR_crossvalid_percenterror.pkl', 'wb'))  
-    pickle.dump(training_mpe, open('SVR_training_percenterror.pkl', 'wb'))    
+    pickle.dump(min_rmse, open('SVR_training_error.pkl', 'wb'))  
+    pickle.dump(min_rmse, open('SVR_crossvalid_error.pkl', 'wb'))    
 
     
 
@@ -239,12 +204,6 @@ def load_dataset(csv_path, add_intercept=True, use_all_features=True, which_feat
     return features, cycle_lives, feature_names
 
 
-def mean_percent_error(model, X, y):
-    predicted_y = model.predict(X)
-    residuals = predicted_y - y
-    return (np.abs(residuals)/y).mean()*100
-
-    
 
 
 

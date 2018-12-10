@@ -40,7 +40,7 @@ for i in range(nF):
 
 
 # Plot
-fig, ax = plt.subplots(figsize=(25,20))
+fig, ax = plt.subplots(figsize=(10,10))
 im = ax.imshow(FMatrix)
 matplotlib.rcParams.update({'font.size': 18})
 
