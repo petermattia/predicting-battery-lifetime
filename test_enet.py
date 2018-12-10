@@ -9,21 +9,22 @@ Created on Sun Dec  9 21:30:22 2018
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import ElasticNetCV
-import pandas as pd
 import pickle
 
 
 def main():
     # prelims
+    plt.close("all")
+    
     N_cycles = np.array([20,30,40,50,60,70,80,90,100])
     rmse = np.zeros(N_cycles.shape)
+    mpe = np.zeros(N_cycles.shape)
     use_log_cycle_life = True
     use_all_features = False
     which_features = [2,3,4,21,22,24,25,39,40,48,49,63,65]
     
     # load all models
-    models = pickle.load(open("enet_trainedmodels.p", "rb" ))
+    models = pickle.load(open("enet_trained_models.pkl", "rb" ))
     
     # loop through enets and make predictions
     for i in np.arange(len(N_cycles)):
@@ -41,27 +42,46 @@ def main():
         else:
             predicted_cycle_lives = enet.predict(features)
         
+        plt.figure()
         plt.plot(cycle_lives,predicted_cycle_lives,'o')
         plt.plot([0,1400],[0,1400],'r-')
         plt.ylabel('Predicted cycle life')
         plt.xlabel('Observed cycle life')
+        plt.title('Cycle number '+str(N_cycles[i]))
         #plt.axis('equal')
         plt.axis([0, 1400, 0, 1400])
         plt.show()
         
         residuals = predicted_cycle_lives - cycle_lives
         rmse[i] = np.sqrt(((residuals) ** 2).mean())
+        mpe[i] = np.mean(np.abs(residuals)/cycle_lives*100)
         
-        print('RMSE:')
+        print('RMSE (cycles):')
         print(rmse[i])
+        print('MPE (%):')
+        print(mpe[i])
         print('=======================================')
         
     
     # plot rmse vs cycle number
-    plt.plot(N_cycles, rmse, '-o')
-    plt.ylabel('testing RMSE error')
+    # 
+    train_rmse = pickle.load(open("enet_training_error.pkl", "rb" ))
+    
+    # rmse
+    plt.figure()
+    plt.plot(N_cycles, train_rmse, '-o',label='Train')
+    plt.plot(N_cycles, rmse, '-o',label='Test')
+    plt.ylabel('RMSE')
     plt.xlabel('cycle number')
-    plt.show()
+    plt.legend()
+    
+    # mse
+    plt.figure()
+    plt.plot(N_cycles, train_mpe, '-o',label='Train')
+    plt.plot(N_cycles, mpe, '-o',label='Test')
+    plt.ylabel('Mean percent error (%)')
+    plt.xlabel('Cycle number')
+    plt.legend()
 
 def load_dataset(csv_path, add_intercept=True, use_all_features=True, which_features=[2]):
     """Load dataset from a CSV file.
