@@ -57,7 +57,9 @@ def main():
 #        C =  np.array([1000]) #np.linspace(1,1000,50)
 #        C =  np.linspace(1,100000,50)
         n_trees =  np.array([1000])
-        learning_rate = np.array([0.001,0.003,0.01,0.1])
+#        learning_rate = np.array([0.001,0.003,0.01,0.1])
+        learning_rate = np.array([0.1])
+
 
         rmse = np.zeros([len(n_trees),len(learning_rate)])        
         train_rmse = np.zeros([len(n_trees),len(learning_rate)])
