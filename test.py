@@ -145,12 +145,13 @@ def main():
     plt.yticks(np.arange(0, 2501, step=500))
     plt.axis([0, 2501, 0, 2501])
     plt.legend()
+    
     plt.tight_layout()
     plt.savefig('./plots/'+MODEL+'_obs_vs_pred.png',bbox_inches='tight')
     plt.savefig('./plots/'+MODEL+'_obs_vs_pred.svg',bbox_inches='tight')
     
     
-    pickle.dump((predicted_cycle_lives,train_predicted_cycle_lives, train_mpe, cv_mpe, mpe), open('RF_data.pkl', 'wb'))  
+    #pickle.dump((predicted_cycle_lives,train_predicted_cycle_lives, train_mpe, cv_mpe, mpe), open('RF_data.pkl', 'wb'))  
 
     
     
