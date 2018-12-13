@@ -14,17 +14,18 @@ import pickle
 
 doPlot = False
 use_all_features = False
+doFig1 = True
 
 def main():
     # prelims
     plt.close("all")
     matplotlib.rcParams.update({'font.size': 18})
     
-    models = ['enet','RF','Adaboost']
+    models = ['enet','RF','AB']
     use_log_cycle_life = [1,0,0]
+    lettering_dict = {0:'a', 1:'b', 2:'c'}
     
-    f1, ax_1 = plt.subplots(1, 3, sharey=True)
-    f2, ax_2 = plt.subplots(1, 3, sharey=True)
+    f, ax = plt.subplots(1, 3, sharey=True, figsize=(20, 6))
     
     for model_idx, MODEL in enumerate(models):
         N_cycles = np.array([20,30,40,50,60,70,80,90,100])
@@ -104,44 +105,44 @@ def main():
             
             file_name = "training/cycles_2TO" + str(int(N_cycles[i])) + "_log.csv"
             train_features, train_cycle_lives, feature_names = load_dataset(file_name, False, use_all_features, which_features)
-    
-    
-        # plot error vs cycle number
-        # mpe
-        plt.figure(1)
-        plt.sca(ax_1[model_idx])
-        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        if MODEL != 'enet':
-            plt.plot(N_cycles, train_mpe, '-o',label='Train',color=colors[2])
-        plt.plot(N_cycles, cv_mpe, '-o',label='CV',color=colors[0])
-        plt.plot(N_cycles, mpe, '-o',label='Test',color=colors[1])
-        plt.ylabel('Mean percent error (%)')
-        plt.xlabel('Cycle number')
-        plt.legend()
-        plt.ylim([0,36])
-
-#        # diagonal line plot
-#        plt.figure(2)
-#        plt.sca(ax_2[model_idx])
-#        plt.plot(train_cycle_lives,train_predicted_cycle_lives,'rs',label='Train')
-#        plt.plot(cycle_lives,predicted_cycle_lives,'bo',label='Test')
-#        plt.plot([0,2400],[0,2400],'k--')
-#        plt.ylabel('Predicted cycle life')
-#        plt.xlabel('Observed cycle life')
-#        #plt.title('Cycle '+str(N_cycles[i]))
-#        plt.axes().set_aspect('equal', 'box')
-#        plt.xticks(np.arange(0, 2501, step=500))
-#        plt.yticks(np.arange(0, 2501, step=500))
-#        plt.axis([0, 2501, 0, 2501])
-#        plt.legend()
-#            
-    f1.tight_layout()
-    #plt.savefig('./plots/'+MODEL+'_error.png',bbox_inches='tight')
-    #plt.savefig('./plots/'+MODEL+'_error.svg',bbox_inches='tight')
-    
-    plt.tight_layout()
-    #plt.savefig('./plots/'+MODEL+'_obs_vs_pred.png',bbox_inches='tight')
-    #plt.savefig('./plots/'+MODEL+'_obs_vs_pred.svg',bbox_inches='tight')
+            
+        f.sca(ax[model_idx])
+        if doFig1:
+            # plot mpe vs cycle number
+            colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+            if MODEL != 'enet':
+                plt.plot(N_cycles, train_mpe, '-o',label='Train',color=colors[2])
+            plt.plot(N_cycles, cv_mpe, '-o',label='CV',color=colors[0])
+            plt.plot(N_cycles, mpe, '-o',label='Test',color=colors[1])
+            plt.xlabel('Cycle number')
+            if model_idx == 0:
+                plt.ylabel('Mean percent error (%)')
+            plt.legend()
+            plt.ylim([0,36])
+            ax[model_idx].set_title(lettering_dict[model_idx],loc='left')
+        else:
+            # diagonal line plot
+            plt.plot(train_cycle_lives,train_predicted_cycle_lives,'rs',label='Train')
+            plt.plot(cycle_lives,predicted_cycle_lives,'bo',label='Test')
+            plt.plot([0,2400],[0,2400],'k--')
+            plt.xlabel('Observed cycle life')
+            if model_idx==0:
+                plt.ylabel('Predicted cycle life')
+            #plt.title('Cycle '+str(N_cycles[i]))
+            ax[model_idx].set_aspect('equal', 'box')
+            plt.xticks(np.arange(0, 2501, step=500))
+            plt.yticks(np.arange(0, 2501, step=500))
+            plt.axis([0, 2501, 0, 2501])
+            plt.legend()
+            ax[model_idx].set_title(lettering_dict[model_idx],loc='left')
+        
+    f.tight_layout()
+    if doFig1:
+        plt.savefig('./plots/all_error.png',bbox_inches='tight')
+        plt.savefig('./plots/all_error.svg',bbox_inches='tight')
+    else:
+        plt.savefig('./plots/all_obs_vs_pred.png',bbox_inches='tight')
+        plt.savefig('./plots/all_obs_vs_pred.svg',bbox_inches='tight')
     
     
 
