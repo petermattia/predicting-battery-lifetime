@@ -5,7 +5,7 @@ import csv
 import pickle
 
 # Read in data: DataIN
-filename = 'norm_coeffs.csv'
+filename = 'results/norm_coeffs.csv'
 FMatrix = np.genfromtxt(filename, delimiter=',')
 FMatrix = FMatrix[1:,1:]
 nF = FMatrix.shape[0]
@@ -17,14 +17,14 @@ reader = csv.reader(f)
 Cycles = next(reader, None)
 
 
-MODEL = 'RF'
+MODEL = 'AB'
 #models = pickle.load(open(MODEL+"_trained_models.pkl", "rb" ))
 #for i in np.arange(nC):
 #    FMatrix[:,i] = models[i].feature_importances_
 #
 #models = pickle.dump(FMatrix, open(MODEL+"_features_coeffs.pkl", "wb" ))
 
-FMatrix = pickle.load(open(MODEL+"_features_coeffs.pkl", "rb" ))
+FMatrix = pickle.load(open('./results/'+MODEL+"_features_coeffs.pkl", "rb" ))
 
 
 
@@ -59,7 +59,7 @@ im = ax.imshow(FMatrix)
 matplotlib.rcParams.update({'font.size': 18})
 
 # Create colorbar
-cbarlabel="Feature weight * 100"
+cbarlabel="Feature importance (%)"
 cbar = ax.figure.colorbar(im, ax=ax)
 cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", size=18)
 
@@ -78,11 +78,11 @@ ax.set_yticklabels(Features)
 for i in range(nF):
     for j in range(nC):
         if FMatrix[i,j] != 0:
-            text = ax.text(j, i, np.round(FMatrix[i,j],1), ha="center", va="center", color="w")
+            text = ax.text(j, i, int(np.round(FMatrix[i,j],0)), ha="center", va="center", color="w")
 
-ax.set_title("Feature selection for random forest", weight='bold', size=20)
+ax.set_title("Feature importance for AdaBoost", weight='bold', size=20)
 fig.tight_layout()
 plt.show()
 plt.xlabel('Cycle number')
 
-plt.savefig(MODEL + '_features.png')
+plt.savefig('./plots/' + MODEL + '_features.png')
