@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 doPlot = False
 use_all_features = False
 
-MODEL = 'AB'
+MODEL = 'RF'
 
 if MODEL == 'enet':
     full_name = 'Elastic net'
