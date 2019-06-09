@@ -84,10 +84,6 @@ def main():
                 
             
             train_mpe = pickle.load(open('results/'+MODEL+"_training_percenterror.pkl", "rb" ))
-            if MODEL != 'enet':
-                cv_mpe = pickle.load(open('results/'+MODEL+"_crossvalid_percenterror.pkl", "rb" ))
-            else:
-                cv_mpe = train_mpe # swap
                 
         else:
             # random forest only
@@ -109,11 +105,8 @@ def main():
         f.sca(ax[model_idx])
         if doFig1:
             # plot mpe vs cycle number
-            colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-            if MODEL != 'enet':
-                plt.plot(N_cycles, train_mpe, '-o',label='Train',color=colors[2])
-            plt.plot(N_cycles, cv_mpe, '-o',label='CV',color=colors[0])
-            plt.plot(N_cycles, mpe, '-o',label='Test',color=colors[1])
+            plt.plot(N_cycles, train_mpe, '-o',label='Train',color='r')
+            plt.plot(N_cycles, mpe, '-o',label='Test',color='b')
             plt.xlabel('Cycle number')
             if model_idx == 0:
                 plt.ylabel('Mean percent error (%)')
