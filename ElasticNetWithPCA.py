@@ -1,76 +1,104 @@
+"""
+Implement linear regression and elastic net feature selection on PCA features
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
-import math
-import sklearn
+from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import ElasticNetCV
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import cross_val_score
-#import pandas as pd
-import pickle
+from sklearn.metrics.scorer import make_scorer
 import csv
 
 def main():
-    N_cycles = np.array([100]) #np.array([20,30,40,50,60,70,80,90,100])
-    #N_cycles = np.array([40])
-    N_features_to_use = np.array([1,2,3,4,5,6,7,8,9,10,15,20,25,30]);
-
+    plt.close('all')
+    # All cycles to consider
+    N_cycles = np.array([20,30,40,50,60,70,80,90,100])
     
+    # Number of principal components to use as features
+    N_features_to_use = np.array([1,2,3,4,5,6,7,8,9,10,15,20,25,30]);
+    
+    # Settings
+    use_elastic_net = False
+    use_log_cycle_life = True
+    use_all_features = False
+    create_plots = False
+    print_output = False
+    
+    if use_elastic_net and use_log_cycle_life:
+        substr = 'enet_log_life'
+    elif use_elastic_net and not use_log_cycle_life:
+        substr = 'enet_lin_life'
+    elif not use_elastic_net and use_log_cycle_life:
+        substr = 'lr_log_life'
+    elif not use_elastic_net and not use_log_cycle_life:
+        substr = 'lr_lin_life'
+    
+    # Preinitialization
     min_rmse = np.zeros([len(N_cycles), len(N_features_to_use)])
     min_percent_error = np.zeros([len(N_cycles), len(N_features_to_use)])
-    optimal_l1_ratio = np.zeros([len(N_cycles), len(N_features_to_use)])
-    optimal_alpha = np.zeros([len(N_cycles), len(N_features_to_use)])
     dev_error = np.zeros([len(N_cycles), len(N_features_to_use)])
-    use_log_cycle_life = True    
-    use_all_features = False
-        
-    trained_models = []    
+    if use_elastic_net:
+        optimal_l1_ratio = np.zeros([len(N_cycles), len(N_features_to_use)])
+        optimal_alpha = np.zeros([len(N_cycles), len(N_features_to_use)])
     
-    for i in np.arange(len(N_cycles)):
-        print('Starting N_cycles = ' + str(int(N_cycles[i])))
-        
-        for j in np.arange(len(N_features_to_use)):
+    trained_models = []
     
-            N_features = N_features_to_use[j]   
-            print('Starting N_features = ' + str(int(N_features)))
+    # loop through all cycles to consider for prediction
+    for i, n_cyc in enumerate(N_cycles):
+        print('Starting N_cycles = ' + str(int(n_cyc)))
+        
+        for j, n_features in enumerate(N_features_to_use):
+            print('Starting N_features = ' + str(int(n_features)))
             
-            feature_path = "pca/train_cycle" + str(int(N_cycles[i])) + ".csv"
+            # Load data
+            feature_path = "pca/train_cycle" + str(int(n_cyc)) + ".csv"
             cycle_lives_path = "pca/train_cycle_lives.csv"
-            features, cycle_lives = load_dataset(feature_path, cycle_lives_path, False, use_all_features, N_features)
+            features, cycle_lives = load_dataset(feature_path, 
+                                                 cycle_lives_path, 
+                                                 False, 
+                                                 use_all_features, 
+                                                 n_features)
             
             # pre-initiliaze array which depends on N_features_to_use
             if i == 0:
                 norm_coeffs = np.zeros([features.shape[1],len(N_cycles)])
-    
-    
-            
                 
-            # Elastic Net CV
-            l1_ratio = [1]#[0.01, .1, .5, .7, .9, .95, .99, 1]
-            alphas = [0]
-            model = ElasticNetCV(alphas=alphas, l1_ratio=l1_ratio, cv=5,
-                                fit_intercept=True, normalize=True,verbose=False, 
-                                max_iter=60000,random_state=0)
-            #model = ElasticNetCV(cv=5, fit_intercept=True, normalize=True,verbose=False,max_iter=60000,random_state=0)
-            # print('Elastic Net CV parameters:')    
-            # print(model.get_params())
-            
+            # Build model
+            if use_elastic_net: # elastic net
+                model = ElasticNetCV(cv=5, fit_intercept=True, normalize=True,
+                                     verbose=False,max_iter=60000,random_state=0)
+
+            else: # linear regression
+                model = LinearRegression(fit_intercept=True,normalize=True)
+                
+            # Fit and predict
             if use_log_cycle_life:
-                model.fit(features,np.log10(cycle_lives))
-                dev_error[i,j] = np.mean(np.sqrt(-cross_val_score(model, features, np.log10(cycle_lives), cv=5, scoring='neg_mean_squared_error')))
+                def mean_squared_pow_error(y_true, y_pred,
+                           sample_weight=None,
+                                              sample_weight, multioutput)
+                model.fit(features,log_cycle_life)
+                dev_error[i,j] = np.mean(np.sqrt(cross_val_score(model, 
                 predicted_cycle_lives = 10**model.predict(features)
-            else:
+            else: # linear cycle life
                 model.fit(features,cycle_lives)
-                dev_error[i,j] = np.mean(np.sqrt(-cross_val_score(model, features, cycle_lives, cv=5, scoring='neg_mean_squared_error')))
+                dev_error[i,j] = np.mean(np.sqrt(-cross_val_score(model, 
+                         features, cycle_lives, cv=5, scoring='neg_mean_squared_error')))
                 predicted_cycle_lives = model.predict(features)
-    
-            trained_models.append(model)        
             
-            plt.plot(cycle_lives,predicted_cycle_lives,'o')
-            plt.plot([0,1400],[0,1400],'r-')
-            plt.ylabel('Predicted cycle lives')
-            plt.xlabel('Actual cycle lives')
-            #plt.axis('equal')
-            plt.axis([0, 1400, 0, 1400])
-            plt.show()
+            trained_models.append(model)
+            
+            if create_plots:
+                plt.figure()
+                plt.plot(cycle_lives,predicted_cycle_lives,'o')
+                plt.plot([0,2400],[0,2400],'r-')
+                plt.ylabel('Predicted cycle life')
+                plt.xlabel('Actual cycle life')
+                plt.title('n_cyc = ' + str(int(n_cyc)) + ', p = ' + str(int(n_features)))
+                #plt.axis('equal')
+                plt.axis([0, 2400, 0, 2400])
+                plt.show()
             
             residuals = predicted_cycle_lives - cycle_lives
             min_rmse[i,j] = np.sqrt(((residuals) ** 2).mean())
@@ -79,58 +107,68 @@ def main():
             # mean_mse = np.mean(model.mse_path_, axis=2)
             # mean_rmse = np.sqrt(mean_mse)
             #min_rmse[i] = min(mean_rmse[~np.isnan(mean_rmse)])
-            optimal_l1_ratio[i,j] = model.l1_ratio_
-            optimal_alpha[i,j] = model.alpha_
+            if use_elastic_net:
+                optimal_l1_ratio[i,j] = model.l1_ratio_
+                optimal_alpha[i,j] = model.alpha_
                     
-            print('Min RMSE:')
-            print(min_rmse[i,j])
-            print('Optimal alpha:')
-            print(model.alpha_)
-            print('Optimal l1_ratio:')
-            print(model.l1_ratio_)
-            print('Normalized coefficients:')
-            norm_coeffs[:,i] = model.coef_ * np.std(features,axis=0)
-            print(norm_coeffs[:,i])
-            print('N iterations to convergence: ' + str(int(model.n_iter_)))
-            print()
-            print('Finished N_cycles = ' + str(int(N_cycles[i])))
-            print('=======================================')
+            if print_output:
+                print('Min RMSE:')
+                print(min_rmse[i,j])
+                print('Optimal alpha:')
+                print(model.alpha_)
+                print('Optimal l1_ratio:')
+                print(model.l1_ratio_)
+                print('Normalized coefficients:')
+                norm_coeffs[:,i] = model.coef_ * np.std(features,axis=0)
+                print(norm_coeffs[:,i])
+                print('N iterations to convergence: ' + str(int(model.n_iter_)))
+                print()
+                print('Finished N_cycles = ' + str(int(n_cyc)))
+                print('=======================================')
     
-    
-            
             
         # explainElasticNetCVResults(model)
-            
+        
+        ## Plots
+        # Number of features used vs dev error
+        plt.figure()
         plt.plot(N_features_to_use,dev_error[i,:],'-o')
-        plt.ylabel('Dev rmse')
         plt.xlabel('N features used')
-        plt.show()    
-        
-        
-        # make nice plots
-        plt.plot(N_cycles, min_rmse, '-o')
-        plt.ylabel('RMSE error')
-        plt.xlabel('N cycles')
+        plt.ylabel('Dev RMSE')
+        plt.title('N cycles = ' + str(int(n_cyc)))
+        plt.ylim([200, 500])
         plt.show()
-    
-        plt.plot(N_cycles, min_percent_error, '-o')
-        plt.ylabel('Percent error')
-        plt.xlabel('N cycles')
-        plt.show()
-    
-        plt.subplot(2, 1, 1)
-        plt.plot(N_cycles, optimal_l1_ratio, '-o')
-        plt.ylabel('Optimal L1 ratio')
-        plt.xlabel('N cycles')
+        plt.savefig('plt/' + str(int(n_cyc)) + 'cyc_' + substr, bbox_inches='tight')
         
-        plt.subplot(2, 1, 2)
-        plt.plot(N_cycles, optimal_alpha, '-o')
-        plt.ylabel('Optimal alpha')
-        plt.xlabel('N cycles')
-        plt.show()
+        if create_plots:
+            # RMSE vs number of cycles used
+            plt.figure()
+            plt.plot(N_cycles, min_rmse, '-o')
+            plt.xlabel('N cycles')
+            plt.ylabel('RMSE error')
+            plt.show()
+            
+            # MAPE vs number of cycles used
+            plt.figure()
+            plt.plot(N_cycles, min_percent_error, '-o')
+            plt.ylabel('Percent error')
+            plt.xlabel('N cycles')
+            plt.show()
+            
+            if use_elastic_net:
+                # elastic net parameters
+                plt.figure()
+                plt.subplot(2, 1, 1)
+                plt.plot(N_cycles, optimal_l1_ratio, '-o')
+                plt.ylabel('Optimal L1 ratio')
+                plt.xlabel('N cycles')
+                
+                plt.subplot(2, 1, 2)
+                plt.plot(N_cycles, optimal_alpha, '-o')
+                plt.ylabel('Optimal alpha')
+                plt.xlabel('N cycles')
+                plt.show()
         
-        
-
     
         # export coeff matrix to csv
     #    if use_all_features:
@@ -146,10 +184,7 @@ def main():
     #    pickle.dump(min_percent_error, open('model_training_percenterror.pkl', 'wb'))
     
 
-    
-    
-    
-    
+"""
 def explainElasticNetCVResults(model):
     print('Optimal alpha:')
     print(model.alpha_)
@@ -164,6 +199,7 @@ def explainElasticNetCVResults(model):
     
     print('Coefficients:')
     print(model.coef_)
+"""
     
     
 def load_dataset(feature_path, cycle_lives_path, add_intercept=True, use_all_features=True, N_features_to_use=20):
@@ -209,10 +245,6 @@ def load_dataset(feature_path, cycle_lives_path, add_intercept=True, use_all_fea
         # print( np.ones([m, 1]))
 
     return features, cycle_lives
-
-
-
-
 
 
 if __name__ == "__main__":
