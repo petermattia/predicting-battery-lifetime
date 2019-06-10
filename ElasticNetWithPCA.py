@@ -77,10 +77,22 @@ def main():
             if use_log_cycle_life:
                 def mean_squared_pow_error(y_true, y_pred,
                            sample_weight=None,
+                           multioutput='uniform_average'):
+                    # adapted from:
+                    # https://github.com/scikit-learn/scikit-learn/blob/7813f7efb/sklearn/metrics/regression.py#L255                    
+                    return mean_squared_error(np.power(10,y_true), np.power(10,y_pred),
                                               sample_weight, multioutput)
+                
+                
+                log_cycle_life = np.log10(cycle_lives)
                 model.fit(features,log_cycle_life)
+                
+                # make custom scorer
+                pow_scorer = make_scorer(mean_squared_pow_error, greater_is_better=True)
                 dev_error[i,j] = np.mean(np.sqrt(cross_val_score(model, 
+                         features, log_cycle_life, cv=5, scoring=pow_scorer)))
                 predicted_cycle_lives = 10**model.predict(features)
+                
             else: # linear cycle life
                 model.fit(features,cycle_lives)
                 dev_error[i,j] = np.mean(np.sqrt(-cross_val_score(model, 
