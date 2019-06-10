@@ -22,9 +22,9 @@ def main():
     
     # Settings
     use_elastic_net = False
-    use_log_cycle_life = False
+    use_log_cycle_life = True
     use_all_features = False
-    create_plots = True
+    create_plots = False
     print_output = False
     
     if use_elastic_net and use_log_cycle_life:
@@ -152,11 +152,14 @@ def main():
         ## Plots
         # Number of features used vs dev error
         plt.figure()
+        plt.plot(N_features_to_use,min_rmse[i,:],'-o')
         plt.plot(N_features_to_use,dev_error[i,:],'-o')
         plt.xlabel('N features used')
-        plt.ylabel('Dev RMSE')
+        plt.ylabel('RMSE')
+        plt.legend(['Train','Dev'], frameon=False)
+        plt.axhline(np.min(dev_error[i,:]),color='tab:red')
         plt.title('N cycles = ' + str(int(n_cyc)))
-        plt.ylim([200, 500])
+        plt.ylim([0, 500])
         plt.show()
         plt.savefig('plt/' + str(int(n_cyc)) + 'cyc_' + substr, bbox_inches='tight')
         
