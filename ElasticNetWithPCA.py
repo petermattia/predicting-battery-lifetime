@@ -10,6 +10,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics.scorer import make_scorer
 import csv
+import os
 
 def main():
     plt.close('all')
@@ -21,9 +22,9 @@ def main():
     
     # Settings
     use_elastic_net = False
-    use_log_cycle_life = True
+    use_log_cycle_life = False
     use_all_features = False
-    create_plots = False
+    create_plots = True
     print_output = False
     
     if use_elastic_net and use_log_cycle_life:
@@ -111,6 +112,13 @@ def main():
                 #plt.axis('equal')
                 plt.axis([0, 2400, 0, 2400])
                 plt.show()
+                
+                # save
+                directory = 'plt/' + str(int(n_cyc)) + 'cyc'
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                plt.savefig('plt/' + str(int(n_cyc)) + 'cyc/' + str(int(n_features))
+                             + 'feat_' + substr, bbox_inches='tight')
             
             residuals = predicted_cycle_lives - cycle_lives
             min_rmse[i,j] = np.sqrt(((residuals) ** 2).mean())
@@ -180,8 +188,9 @@ def main():
                 plt.ylabel('Optimal alpha')
                 plt.xlabel('N cycles')
                 plt.show()
+                
+        plt.close('all')
         
-    
         # export coeff matrix to csv
     #    if use_all_features:
     #        df = pd.DataFrame(norm_coeffs, columns=N_cycles, index=feature_names)
